@@ -247,7 +247,7 @@ export default function App() {
         if (!res.ok) {
           let errorText = `Server error: ${res.status}`;
           try {
-            const errData = await res.json();
+            const errData = (await res.json()) as { error?: string };
             if (errData && typeof errData.error === "string") {
               errorText = errData.error;
             }
@@ -257,7 +257,7 @@ export default function App() {
           throw new Error(errorText);
         }
 
-        const data = await res.json<{ reply: string; sessionId: string }>();
+        const data = (await res.json()) as { reply: string; sessionId: string };
         const aiMessage: Message = {
           id: crypto.randomUUID(),
           role: "assistant",
