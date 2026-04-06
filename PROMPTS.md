@@ -33,8 +33,12 @@ and returns the AI reply with CORS headers."
 Fix the CORS handling in my Worker fetch handler."
 
 ## Prompt 10 — Folder Structure
-"I'm sending you screenshot of my folder structure and tell me what is wrong."
+"I'm sending you screenshot of my folder structure and tell me what is wrong.
+Tell me which files I have to add in .gitignore."
 
 ## Prompt 11 — Readme.md
 "Now, I have provided you all the context of this assignment. Analyse it properly
 and generate Readme.md for this project with architecture."
+
+## Prompt 12 — Improve UI
+"Improve the UI of this application. Make it responsive and user-friendly."
