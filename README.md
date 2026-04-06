@@ -6,7 +6,7 @@
 
 ## Live Demo
 
-> 🔗 **[https://your-pages-project.pages.dev](https://your-pages-project.pages.dev)** *(replace with your deployed URL)*
+> 🔗 **[https://cf-ai-chatapp.pages.dev/](https://cf-ai-chatapp.pages.dev/)**
 
 ---
 
