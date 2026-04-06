@@ -245,6 +245,7 @@ export default function App() {
         w-[260px] md:w-60 flex-shrink-0
       `}>
         <Sidebar
+          isOpen={sidebarOpen}
           sessions={sessions}
           activeSessionId={activeSessionId}
           onSelect={handleSelectSession}
@@ -289,7 +290,7 @@ export default function App() {
 
             <div className="min-w-0">
               <h1 className="text-sm sm:text-base font-semibold text-white leading-none truncate">
-                CF AI Chat
+                PandeG
               </h1>
               <p className="text-[10px] sm:text-xs text-gray-500 mt-0.5 truncate">
                 {currentTitle ?? "New Conversation"} · Llama&nbsp;3.3
