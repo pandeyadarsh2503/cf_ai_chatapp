@@ -200,13 +200,42 @@ export default function App() {
         throw new Error(errorText);
       }
 
-      const data = (await res.json()) as { reply: string; sessionId: string };
-      setMessages((prev) => [...prev, {
-        id: crypto.randomUUID(),
-        role: "assistant",
-        content: data.reply,
-        timestamp: new Date(),
-      }]);
+      // ── Create a placeholder assistant message to stream into ──
+      const aiMsgId = crypto.randomUUID();
+      setMessages((prev) => [
+        ...prev,
+        { id: aiMsgId, role: "assistant", content: "", timestamp: new Date() },
+      ]);
+
+      if (!res.body) throw new Error("No readable stream received.");
+
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        const chunk = decoder.decode(value, { stream: true });
+        const lines = chunk.split("\n");
+        for (let line of lines) {
+          line = line.trim();
+          if (line.startsWith("data:") && line !== "data: [DONE]") {
+            try {
+              const data = JSON.parse(line.slice(5).trim());
+              if (data.response) {
+                setMessages((prev) =>
+                  prev.map((m) =>
+                    m.id === aiMsgId ? { ...m, content: m.content + data.response } : m
+                  )
+                );
+              }
+            } catch {
+              // Ignore partial JSON
+            }
+          }
+        }
+      }
     } catch (err) {
       setMessages((prev) => [...prev, {
         id: crypto.randomUUID(),

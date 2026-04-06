@@ -23,11 +23,6 @@ interface ChatRequestBody {
   sessionId: string;
 }
 
-/** Response body returned from POST /chat */
-interface ChatResponseBody {
-  reply: string;
-  sessionId: string;
-}
 
 /** Response body returned from GET /history */
 interface HistoryResponseBody {
@@ -41,18 +36,14 @@ interface ErrorResponseBody {
   status: number;
 }
 
-/** Cloudflare Workers AI run result for text generation */
-interface AITextResponse {
-  response?: string;
-}
 
 /** Bindings available on the Worker's env object */
 interface Env {
   AI: {
     run(
       model: string,
-      options: { messages: ChatMessage[] }
-    ): Promise<AITextResponse>;
+      options: { messages: ChatMessage[]; stream?: boolean }
+    ): Promise<any>;
   };
   CHAT_HISTORY: KVNamespace;
 }
@@ -162,7 +153,8 @@ async function saveHistory(
  */
 async function handleChat(
   request: Request,
-  env: Env
+  env: Env,
+  ctx: ExecutionContext
 ): Promise<Response> {
   let body: ChatRequestBody;
 
@@ -201,37 +193,57 @@ async function handleChat(
   // Build messages array: system prompt first, then history
   const messages: ChatMessage[] = [SYSTEM_PROMPT, ...history];
 
-  // Call Workers AI — Llama 3.3
-  let aiReply: string;
+  // Call Workers AI — Llama 3.3 with streaming enabled
+  let aiResponseStream: ReadableStream;
   try {
-    const aiResponse = await env.AI.run(LLAMA_MODEL, { messages });
-    aiReply = aiResponse.response?.trim() ?? "I'm sorry, I could not generate a response.";
+    aiResponseStream = await env.AI.run(LLAMA_MODEL, { messages, stream: true });
   } catch (err) {
     console.error("Workers AI error:", err);
-    const errBody: ErrorResponseBody = {
-      error: "AI service error. Please try again.",
-      status: 502,
-    };
+    const errBody: ErrorResponseBody = { error: "AI service error.", status: 502 };
     return jsonResponse(errBody, 502);
   }
 
-  // Append AI reply to history
-  history.push({ role: "assistant", content: aiReply });
+  // Tee the stream: one for the user response, one for our background processor
+  const [clientStream, workerStream] = aiResponseStream.tee();
 
-  // Persist updated history to KV (trimmed to last MAX_HISTORY_MESSAGES)
-  try {
-    await saveHistory(env.CHAT_HISTORY, sessionId, history);
-  } catch (err) {
-    // Non-fatal: log but still return the reply
-    console.error("KV save error:", err);
-  }
+  // Background processor: read the stream chunks, accumulate text, and save KV
+  ctx.waitUntil((async () => {
+    const reader = workerStream.getReader();
+    const decoder = new TextDecoder();
+    let fullReply = "";
 
-  const responseBody: ChatResponseBody = {
-    reply: aiReply,
-    sessionId,
-  };
+    try {
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        
+        const chunk = decoder.decode(value, { stream: true });
+        const lines = chunk.split("\n");
+        for (let line of lines) {
+          line = line.trim();
+          if (line.startsWith("data:") && line !== "data: [DONE]") {
+            try {
+              const data = JSON.parse(line.slice(5).trim());
+              if (data.response) fullReply += data.response;
+            } catch {
+              // Ignore partial JSON chunks
+            }
+          }
+        }
+      }
 
-  return jsonResponse(responseBody, 200);
+      // Once finished, append to history and save
+      history.push({ role: "assistant", content: fullReply.trim() });
+      await saveHistory(env.CHAT_HISTORY, sessionId, history);
+    } catch (err) {
+      console.error("Background stream processing error:", err);
+    }
+  })());
+
+  const headers = new Headers(CORS_HEADERS);
+  headers.set("Content-Type", "text/event-stream");
+  
+  return new Response(clientStream, { status: 200, headers });
 }
 
 /**
@@ -269,7 +281,7 @@ async function handleHistory(
 // ─────────────────────────────────────────────
 
 export default {
-  async fetch(request: Request, env: Env): Promise<Response> {
+  async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
     const url = new URL(request.url);
     const { pathname, method } = { pathname: url.pathname, method: request.method };
 
@@ -280,7 +292,7 @@ export default {
 
     // ── Route: POST /chat ────────────────────────
     if (pathname === "/chat" && method === "POST") {
-      return handleChat(request, env);
+      return handleChat(request, env, ctx);
     }
 
     // ── Route: GET /history ──────────────────────
