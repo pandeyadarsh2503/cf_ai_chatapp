@@ -1,0 +1,27 @@
+# ───────────────────────────
+# Dependencies
+node_modules/
+
+# ───────────────────────────
+# Vite build output
+frontend/dist/
+
+# ───────────────────────────
+# Environment secrets
+frontend/.env
+worker/.dev.vars
+
+# ───────────────────────────
+# Wrangler local state
+.wrangler/
+
+# ───────────────────────────
+# OS & editor
+.DS_Store
+Thumbs.db
+.vscode/
+*.orig
+
+# ───────────────────────────
+# TypeScript cache
+*.tsbuildinfo

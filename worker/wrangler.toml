@@ -1,0 +1,31 @@
+# ============================================================
+# Wrangler configuration for cf-ai-chatapp-worker
+# ============================================================
+
+name = "cf-ai-chatapp-worker"
+main = "src/index.ts"
+compatibility_date = "2024-01-01"
+
+# ============================================================
+# Workers AI Binding
+# Gives access to Cloudflare's AI models via env.AI
+# ============================================================
+[ai]
+binding = "AI"
+
+# ============================================================
+# KV Namespace Binding for conversation history
+#
+# SETUP INSTRUCTIONS:
+# 1. Run: wrangler kv namespace create "CHAT_HISTORY"
+#    → Copy the returned `id` and paste it below as `id = "..."`
+#
+# 2. Run: wrangler kv namespace create "CHAT_HISTORY" --preview
+#    → Copy the returned `id` and paste it below as `preview_id = "..."`
+#
+# Do NOT commit real IDs to version control.
+# ============================================================
+[[kv_namespaces]]
+binding = "CHAT_HISTORY"
+id = "f2c82904b77f44ed8069560bb13c288a"
+preview_id = "c8163b75c38f4b74a923621968a03def"
