@@ -22,16 +22,19 @@ Memory or state"
 to a REST API, displays user and assistant messages, and persists 
 a sessionId in localStorage."
 
-
-## Prompt 1 — Worker backend logic
+## Prompt 8 — Worker backend logic
 "Write a Cloudflare Worker in TypeScript that accepts a POST /chat 
 request with a message and sessionId, loads conversation history 
 from KV, calls Llama 3.3 on Workers AI, saves updated history, 
 and returns the AI reply with CORS headers."
 
-## Prompt 2 — Frontend chat UI
-"Build a clean chat UI in vanilla HTML/CSS/JS that sends messages 
-to a REST API, displays user and assistant messages, and persists 
-a sessionId in localStorage."
+## Prompt 9 — Debugging CORS
+"My Cloudflare Worker returns 403 on OPTIONS preflight requests.
+Fix the CORS handling in my Worker fetch handler."
 
-## Prompt 3 — Debugging CORS
+## Prompt 10 — Folder Structure
+"I'm sending you screenshot of my folder structure and tell me what is wrong."
+
+## Prompt 11 — Readme.md
+"Now, I have provided you all the context of this assignment. Analyse it properly
+and generate Readme.md for this project with architecture."

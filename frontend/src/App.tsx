@@ -103,20 +103,15 @@ export default function App() {
     loadSessionIndex()
   );
 
-  // ── Active session ID ─────────────────────────
+  // ── Active session ID — always fresh on page load ──
   const [activeSessionId, setActiveSessionId] = useState<string>(() => {
-    const stored = localStorage.getItem(ACTIVE_SESSION_KEY);
-    if (stored) return stored;
     const newId = generateSessionId();
     localStorage.setItem(ACTIVE_SESSION_KEY, newId);
     return newId;
   });
 
-  // ── Messages for the active session ───────────
-  const [messages, setMessages] = useState<Message[]>(() => {
-    const stored = localStorage.getItem(ACTIVE_SESSION_KEY);
-    return stored ? loadMessages(stored) : [];
-  });
+  // ── Messages — always start empty on page load ──
+  const [messages, setMessages] = useState<Message[]>([]);
 
   const [isLoading, setIsLoading] = useState(false);
 
